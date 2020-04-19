@@ -92,11 +92,7 @@
             </div>
         </div>
         <div id="pagination" class="pagination-container">
-            @if($type == 'search')
-                {!! $messages->appends(['query' => $query,'sid' => $sessionid])->links('vendor.pagination.custom') !!}
-            @else
-                {!! $messages->appends(['sid' => $sessionid])->links('vendor.pagination.custom') !!}
-            @endif
+
         </div>
     </div>
     <!--[if lt IE 10]>
