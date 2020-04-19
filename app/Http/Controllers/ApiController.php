@@ -120,7 +120,7 @@ class ApiController extends Controller {
 			$data[] = [
 				$channel->name,
 				$channel->topic,
-				$channel->num_members,
+				$channel->members_count,
 			];
 		}
 
