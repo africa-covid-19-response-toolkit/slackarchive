@@ -150,21 +150,11 @@ class ApiController extends Controller {
 				}, $urls );
 
 				if ( empty( $keyword_id ) ) {
-					$data[] = [
-						date( "d/m/Y H:i:s", strtotime($message->ts) ),
-						strip_tags( $message->message ),
-						implode( " \n ", $urls ),
-						$message->file_url ?? ''
-					];
+					$data[] = $this->get_data( $message, $urls );
 				} else {
 					$keywords = self::KEYWORDS[ intval( $keyword_id ) ];
-					if ( $this->matches_keyword( $keywords, $message->text ) ) {
-						$data[] = [
-							date( "d/m/Y H:i:s", $message->ts ),
-							strip_tags( $message->text ),
-							implode( " \n ", $urls ),
-							$message->files[0]->url_private ?? ''
-						];
+					if ( $this->matches_keyword( $keywords, $message->message ) ) {
+						$data[] = $this->get_data( $message, $urls );
 					}
 				}
 			}
@@ -183,6 +173,15 @@ class ApiController extends Controller {
 
 	}
 
+
+	private function get_data( $message, $urls ) {
+		return [
+			date( "d/m/Y H:i:s", strtotime( $message->ts ) ),
+			strip_tags( $message->message ),
+			implode( " \n ", $urls ),
+			$message->file_url ?? ''
+		];
+	}
 
 	private function extract_urls( $text ) {
 		preg_match_all( '#\bhttps?://[^,\s()<>]+(?:\([\w\d]+\)|([^,[:punct:]\s]|/))#', $text, $match );
