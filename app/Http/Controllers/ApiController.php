@@ -151,7 +151,7 @@ class ApiController extends Controller {
 
 				if ( empty( $keyword_id ) ) {
 					$data[] = [
-						date( "d/m/Y H:i:s", $message->ts ),
+						date( "d/m/Y H:i:s", strtotime($message->ts) ),
 						strip_tags( $message->message ),
 						implode( " \n ", $urls ),
 						$message->file_url ?? ''
