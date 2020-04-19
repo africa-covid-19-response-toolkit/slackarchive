@@ -17,8 +17,8 @@ class ApiController extends Controller {
 	const KW2 = 'Mask, gloves, close contact, social distancing, clean hands, wash hands, cough sneeze';
 	const KW3 = 'Clean surface, disinfect, clean soft surface, clean hard surface, clean electronics, laundry';
 	const KW4 = 'Fever, cough, shortness of breath, short breath, sense of smell, sense of taste';
-	const KW5 = 'Coronavirus test positive, separate self, self isolation, self quarantine, monitor symptoms, symptoms, mask, cover face, cover cough, cover sneeze, clean hands, wash hands, share/sharing food, share/sharing, clean, disinfect';
-	const KW6 = 'Coronavirus test positive, separate self, self isolation, self quarantine, share/sharing, clean, disinfect/sharing food, share/sharing, clean, disinfect';
+	const KW5 = 'Coronavirus test positive, separate self, self isolation, self quarantine, monitor symptoms, symptoms, mask, cover face, cover cough, cover sneeze, clean hands, wash hands, share sharing food, share sharing, clean, disinfect';
+	const KW6 = 'Coronavirus test positive, separate self, self isolation, self quarantine, share sharing, clean, disinfect sharing food, share sharing, clean, disinfect';
 	const KW7 = 'quarantine';
 	const KW8 = 'Clean surface, disinfect, clean soft surface, clean hard surface, clean electronics, laundry, shared room, separate room, shared food, trash';
 	const KW9 = 'Child safe, child coronavirus, child symptoms, child social distancing, child clean hands';
