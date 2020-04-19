@@ -2,14 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use SlackApi;
-use SlackChannel;
-use SlackChat;
-use SlackFile;
-use SlackGroup;
-use SlackUser;
+
 use Illuminate\Http\Response;
 use Illuminate\Http\Request;
+use App\Channels;
+use App\Messages;
+use App\User;
 
 class ApiController extends Controller {
 
@@ -91,13 +89,12 @@ class ApiController extends Controller {
 	 */
 	public function users() {
 		$data  = [];
-		$users = SlackUser::lists();;
-		foreach ( $users->members as $member ) {
-			$real_name = $member->profile->real_name ?? '';
-			$data[]    = [
-				! empty( $real_name ) ? sprintf( "%s (%s)", $real_name, $member->name ) : $member->name,
-				$member->profile->email ?? '',
-				//$member->profile->image_72
+		$users = User::all();;
+		foreach ( $users as $member ) {
+			$data[] = [
+				$member->name,
+				$member->email,
+				//$member->avatar
 			];
 		}
 
@@ -118,25 +115,14 @@ class ApiController extends Controller {
 	 */
 	public function channels() {
 		$data     = [];
-		$channels = SlackChannel::lists( 0 );
-		foreach ( $channels->channels as $channel ) {
+		$channels = Channels::all();
+		foreach ( $channels as $channel ) {
 			$data[] = [
 				$channel->name,
-				$channel->purpose->value,
+				$channel->topic,
 				$channel->num_members,
 			];
 		}
-
-		/*
-				$groups = SlackGroup::lists( 0 );
-				foreach ( $groups->groups as $group ) {
-					var_dump($group);exit;
-					$data[] = [
-						$group->name,
-						$group->purpose->value,
-						$group->num_members,
-					];
-				}*/
 
 		return response()->stream( function () use ( $data ) {
 			$out = fopen( 'php://output', 'w' );
@@ -153,71 +139,36 @@ class ApiController extends Controller {
 		$keyword_id = $request->get( 'keyword_id' ) ?? false;
 		$data       = [];
 
-		$limit        = 300;
-		$channel_list = SlackChannel::lists( 0 );
-		foreach ( $channel_list->channels as $c ) {
-			if ( empty( $c->is_group ) ) {
-				$channel_messages = SlackChannel::history( $c->id, $limit );
-			} else {
-				$channel_messages = SlackGroup::history( $c->id, $limit );
-			}
+		$messages = Messages::all();
+		foreach ( $messages as $message ) {
+			$urls = $this->extract_urls( $message->message );
+			if ( ! empty( $urls ) ) {
+				$urls = array_map( function ( $item ) {
+					$split = explode( '|', $item );
 
-			if ( ! isset( $channel_messages->messages ) ) {
-				continue;
-			}
+					return current( array_unique( $split ) );
+				}, $urls );
 
-			foreach ( $channel_messages->messages as $message ) {
-
-				if ( ! isset( $message ) ) {
-					continue;
-				}
-
-				if ( isset( $message->bot_id ) ) {
-					continue;
-				}
-
-				if ( ! isset( $message->user ) ) {
-					continue;
-				}
-
-				if ( ! isset( $message->text ) ) {
-					continue;
-				}
-
-
-				if ( empty( $message->user ) ) {
-					continue;
-				}
-
-				$urls = $this->extract_urls( $message->text );
-				if ( ! empty( $urls ) ) {
-					$urls = array_map( function ( $item ) {
-						$split = explode( '|', $item );
-
-						return current( array_unique( $split ) );
-					}, $urls );
-
-					if ( empty( $keyword_id ) ) {
+				if ( empty( $keyword_id ) ) {
+					$data[] = [
+						date( "d/m/Y H:i:s", $message->ts ),
+						strip_tags( $message->message ),
+						implode( " \n ", $urls ),
+						$message->file_url ?? ''
+					];
+				} else {
+					$keywords = self::KEYWORDS[ intval( $keyword_id ) ];
+					if ( $this->matches_keyword( $keywords, $message->text ) ) {
 						$data[] = [
 							date( "d/m/Y H:i:s", $message->ts ),
 							strip_tags( $message->text ),
 							implode( " \n ", $urls ),
 							$message->files[0]->url_private ?? ''
 						];
-					} else {
-						$keywords = self::KEYWORDS[ intval( $keyword_id ) ];
-						if ( $this->matches_keyword( $keywords, $message->text ) ) {
-							$data[] = [
-								date( "d/m/Y H:i:s", $message->ts ),
-								strip_tags( $message->text ),
-								implode( " \n ", $urls ),
-								$message->files[0]->url_private ?? ''
-							];
-						}
 					}
 				}
-
 			}
+
 
 		}
 
@@ -241,10 +192,11 @@ class ApiController extends Controller {
 	}
 
 	private function matches_keyword( $key_word_string, $text ) {
-		$array_keywords = explode(' ', preg_replace('#\.([a-zA-Z])#', '. $1', preg_replace('/\s+/', ' ',$key_word_string)));
-		$array_keywords = array_map(function ($item) {
-			return rtrim($item, ',');
-		}, $array_keywords);
+		$array_keywords = explode( ' ',
+			preg_replace( '#\.([a-zA-Z])#', '. $1', preg_replace( '/\s+/', ' ', $key_word_string ) ) );
+		$array_keywords = array_map( function ( $item ) {
+			return rtrim( $item, ',' );
+		}, $array_keywords );
 
 		foreach ( $array_keywords as $keys ) {
 			if ( strpos( $text, $keys ) ) {

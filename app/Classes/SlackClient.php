@@ -26,11 +26,6 @@ class SlackClient {
 		$members   = $listusers->members;
 
 		foreach ( $members as $member ) {
-//			echo $member->name . "\n";
-//			echo $member->id . "\n";
-//			echo $member->profile->image_72 . "\n";
-
-			//Insert if item does not exist or Update if Item exists.
 			$user          = User::firstOrNew( [ 'userid' => $member->id ] ); //RELACE ON CONFLICT
 			$real_name     = $member->profile->real_name ?? '';
 			$user->name    = ! empty( $real_name ) ? sprintf( "%s (%s)", $real_name, $member->name ) : $member->name;
@@ -54,11 +49,13 @@ class SlackClient {
 			echo "\n----\n";
 
 			//Insert if item does not exist or Update if Item exists.
-			$c              = Channels::firstOrNew( [ 'channelid' => $channel->id ] ); //RELACE ON CONFLICT
-			$c->name        = $channel->name;
-			$c->channelid   = $channel->id;
-			$c->is_archived = $channel->is_archived;
-			$c->is_group    = false;
+			$c                = Channels::firstOrNew( [ 'channelid' => $channel->id ] ); //RELACE ON CONFLICT
+			$c->name          = $channel->name;
+			$c->channelid     = $channel->id;
+			$c->topic         = $channel->purpose->value;
+			$c->members_count = $channel->num_members;
+			$c->is_archived   = $channel->is_archived;
+			$c->is_group      = false;
 			$c->save();
 
 		}
@@ -176,7 +173,7 @@ class SlackClient {
 					}
 
 					$m->save();
-					$m->addToIndex(); //add to ES Index
+					//$m->addToIndex(); //add to ES Index
 
 				} else {
 					// "firstOrCreate" found the record in the DB, do Update and fetched it.
